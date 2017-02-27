@@ -22,13 +22,15 @@ angular.module('ui.calendar', [])
             var wrapFunctionWithScopeApply = function (functionToWrap) {
                 return function () {
                     // This may happen outside of angular context, so create one if outside.
-                    if ($scope.$root.$$phase) {
+                    /*if ($scope.$root.$$phase) {
+						console.log("hello");
                         return functionToWrap.apply(this, arguments);
-                    }
+                    }*/
 
                     var args = arguments;
                     var that = this;
-                    return $scope.$root.$apply(
+					return $scope.$root.$evalAsync(
+                    //return $scope.$root.$apply(
                         function () {
                             return functionToWrap.apply(that, args);
                         }
@@ -281,7 +283,7 @@ angular.module('ui.calendar', [])
 
                     scope.initCalendar = function () {
                         if (!calendar) {
-                            calendar = $(elm).html('');
+                            calendar = angular.element(elm).html('');
                         }
                         calendar.fullCalendar(options);
                         if (attrs.calendar) {
