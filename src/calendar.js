@@ -22,12 +22,12 @@ angular.module('ui.calendar', [])
             var wrapFunctionWithScopeApply = function (functionToWrap) {
                 return function () {
                     // This may happen outside of angular context, so create one if outside.
-                    if ($scope.$root.$$phase) {
+                    if ($scope.$root.$$phase) {					
                         return functionToWrap.apply(this, arguments);
                     }
 
                     var args = arguments;
-                    var that = this;
+                    var that = this;					
                     return $scope.$root.$apply(
                         function () {
                             return functionToWrap.apply(that, args);
@@ -36,6 +36,23 @@ angular.module('ui.calendar', [])
                 };
             };
 
+            var wrapFunctionWithScopeEval = function (functionToWrap) {
+                return function () {
+                    // This may happen outside of angular context, so create one if outside.
+                    if ($scope.$root.$$phase) {					
+                        return functionToWrap.apply(this, arguments);
+                    }
+
+                    var args = arguments;
+                    var that = this;					
+                    return $scope.$root.$evalAsync(
+                        function () {
+                            return functionToWrap.apply(that, args);
+                        }
+                    );
+                };
+            };
+            
             var eventSerialId = 1;
             // @return {String} fingerprint of the event object and its properties
             this.eventFingerprint = function (e) {
@@ -195,7 +212,13 @@ angular.module('ui.calendar', [])
 
                 angular.forEach(config, function (value, key) {
                     if (typeof value === 'function') {
-                        config[key] = wrapFunctionWithScopeApply(config[key]);
+                        // filter by eventKind, eventRender with the actual digest "loop" blast our perf, we use evalAsync                        
+                        if(key === 'eventAllow' || key === 'eventMouseover' || key === 'eventMouseout' ){
+                                config[key] = wrapFunctionWithScopeApply(config[key]);
+                        }else{
+                                config[key] = wrapFunctionWithScopeEval(config[key]);
+                        }
+
                     }
                 });
 
@@ -281,7 +304,7 @@ angular.module('ui.calendar', [])
 
                     scope.initCalendar = function () {
                         if (!calendar) {
-                            calendar = $(elm).html('');
+                            calendar = angular.element(elm).html('');
                         }
                         calendar.fullCalendar(options);
                         if (attrs.calendar) {
